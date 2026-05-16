@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalkulator TOPSIS - Pemilihan Menu MBG</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container my-4">
+        <div class="bg-white p-4 rounded shadow-sm mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold text-primary mb-1">🧮 Kalkulator TOPSIS Pemilihan Menu MBG</h3>
+                <p class="text-muted mb-0 small">Input Gramasi Kandungan Gizi Secara Mandiri (Maksimal 14 Alternatif Menu)</p>
+            </div>
+            <a href="/clear_calc" class="btn btn-sm btn-danger fw-bold">🗑️ Kosongkan Kalkulator</a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white fw-bold small">
+                        ✍️ Input Data Gramasi Menu (Slot ke-{{ menus|length + 1 }}/14)
+                    </div>
+                    <div class="card-body">
+                        {% if menus|length < 14 %}
+                        <form action="/add_calc" method="POST">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Nama Alternatif Menu</label>
+                                <input type="text" name="nama" class="form-control form-control-sm" placeholder="Misal: Menu Hari 1 (Ayam Katsu)" required>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6 mb-2">
+                                    <label class="form-label small">Energi (kkal)</label>
+                                    <input type="number" step="0.01" name="energi" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="form-label small">Protein (g)</label>
+                                    <input type="number" step="0.01" name="protein" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="form-label small">Lemak (g)</label>
+                                    <input type="number" step="0.01" name="lemak" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="form-label small">Karbohidrat (g)</label>
+                                    <input type="number" step="0.01" name="karbo" class="form-control form-control-sm" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">Serat (g)</label>
+                                <input type="number" step="0.01" name="serat" class="form-control form-control-sm" required>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">➕ Tambahkan Menu</button>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-warning text-center small mb-0 fw-bold">
+                            ⚠️ Batas maksimal 14 menu sudah terpenuhi!
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8 mb-4">
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-dark text-white fw-bold small d-flex justify-content-between align-items-center">
+                        <span>📊 Matriks Keputusan Eksisting</span>
+                        <span class="badge bg-secondary">{{ menus|length }} / 14 Menu</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped text-center mb-0 align-middle small" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th class="text-start">Nama Alternatif</th>
+                                    <th>Energi</th>
+                                    <th>Prot</th>
+                                    <th>Lmk</th>
+                                    <th>Karb</th>
+                                    <th>Srt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for menu in menus %}
+                                <tr>
+                                    <td>{{ menu.no }}</td>
+                                    <td class="text-start"><strong>{{ menu.nama }}</strong></td>
+                                    <td>{{ menu.data[0] }}</td>
+                                    <td>{{ menu.data[1] }}</td>
+                                    <td>{{ menu.data[2] }}</td>
+                                    <td>{{ menu.data[3] }}</td>
+                                    <td>{{ menu.data[4] }}</td>
+                                </tr>
+                                {% opacity 0.5 for empty slots %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-muted p-4">Belum ada data gramasi. Silakan input menggunakan form di sebelah kiri[cite: 212, 264].</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if menus|length >= 2 %}
+                <form method="POST">
+                    <button type="submit" name="btn_hitung" class="btn btn-primary w-100 fw-bold shadow-sm">⚡ Hitung Peringkat Menu (Proses Algoritma TOPSIS)</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if results %}
+        <div class="card shadow border-0 mt-2">
+            <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+                <span>🏆 Hasil Analisis Perankingan Menu Optimal</span>
+                <button onclick="window.print()" class="btn btn-sm btn-light fw-bold">🖨️ Cetak Laporan</button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 text-center align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Peringkat</th>
+                            <th class="text-start ps-4">Alternatif Menu</th>
+                            <th>Jarak Ideal Positif (D+)</th>
+                            <th>Jarak Ideal Negatif (D-)</th>
+                            <th>Nilai Kedekatan Relatif (RC)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in results %}
+                        <tr class="{% if loop.first %}table-success fw-bold{% endif %}">
+                            <td><span class="badge bg-dark fs-6">#{{ loop.index }}</span></td>
+                            <td class="text-start ps-4">
+                                <span class="d-block">{{ res.nama }}</span>
+                                {% if loop.first %}<small class="text-success text-muted">• Rekomendasi Menu Utama</small>{% endif %}
+                            </td>
+                            <td>{{ res.d_pos }}</td>
+                            <td>{{ res.d_neg }}</td>
+                            <td><mark class="fw-bold fs-6">{{ res.score }}</mark></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
